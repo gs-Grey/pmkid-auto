@@ -10,15 +10,18 @@ from pmkidauto.line_scrapper import LineScrapper
 
 def elevator():
     if os.geteuid() != 0:
-        print('[Warning] This program requires root privileges, consider install/running as superuser (sudo).')
-        msg = "[sudo] password for %u:"
-        subprocess.check_call(f"sudo -v -p '{msg}'", shell=True)
+        print('[Warning] This program requires root privileges, consider install/running as superuser (su).')
+        # Using su in Termux instead of sudo
+        if not shutil.which('su'):
+             print('[Error] su command not found. Please run as root.')
+             return False
         return True
 
 
 class Auto:
-    _stop_supp = ['systemctl', 'stop', 'wpa_supplicant.service']
-    _start_supp = ['systemctl', 'start', 'wpa_supplicant.service']
+    # Removed systemctl commands as they are not available in Termux
+    # _stop_supp = ['systemctl', 'stop', 'wpa_supplicant.service']
+    # _start_supp = ['systemctl', 'start', 'wpa_supplicant.service']
 
     def __init__(self, interface: str,
                  wordlist='',
@@ -44,11 +47,15 @@ class Auto:
             self.wordlist = ''
 
     def run_command(self, command):
-        if self.sudo_require:
-            command.insert(0, 'sudo')
+        # Modified to handle root commands in Termux via 'su -c'
+        if self.sudo_require and os.geteuid() != 0:
+            command = ['su', '-c'] + [' '.join(command)]
         try:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            return process.communicate()[0].decode()
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            if stderr:
+                print(f"[Error running command {' '.join(command)}]: {stderr.decode()}")
+            return stdout.decode()
         except FileNotFoundError:
             pass
 
@@ -80,7 +87,7 @@ class Auto:
     def start(self):
         print('[!] Scanning...')
         self.over_conf()
-        self.run_command(self._stop_supp)
+        # self.run_command(self._stop_supp) # systemctl command removed
         _cli_bssid = self.get_mac()
         essid_bssid_list = self._ls.get_ap_list(self.run_command(self._commsupp))
         if essid_bssid_list:
@@ -112,4 +119,4 @@ class Auto:
                             mp.Process(target=self.b_force, args=(pmkid_hash, essid)).start()
         else:
             print('[!] No AP found :( Try increase "--scan_time".')
-        self.run_command(self._start_supp)
+        # self.run_command(self._start_supp) # systemctl command removed

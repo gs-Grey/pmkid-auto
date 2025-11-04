@@ -18,15 +18,23 @@ The program creates 3 files:
 
 ## requirements
 
-- wpa_supplicant  (to install: ```sudo apt install wpasupplicant``` )
-- python >=3.6
+    pkg update && pkg upgrade && pkg install root-repo && pkg install python git wpa-supplicant
+
+- wpa_supplicant (```pkg install wpa-supplicant```)
+- python >=3.6 (```pkg install python git```)
 
 ## instalation
 
 
-    sudo pip3 install git+git://github.com/Sinf0r0s0/pmkid-auto.git
-    or
-    sudo pip3 install --upgrade https://github.com/Sinf0r0s0/pmkid-auto/tarball/master
+    pip install --upgrade pip setuptools wheel pbkdf2 && pip install --no-build-isolation git+https://github.com/gs-Grey/pmkid-auto.git
+or
+
+    sudo pip3 install git+git://github.com/gs-Grey/pmkid-auto.git
+
+
+or
+
+    sudo pip3 install --upgrade https://github.com/gs-Grey/pmkid-auto/tarball/master
     
 
 ## usage
@@ -35,8 +43,12 @@ The program creates 3 files:
 
 Once installed, simply call **pmkidauto** from the command line as superuser:
 
+    sudo pmkidauto -i wlan0 -s 10 -t 15
+
+or
+
     sudo pmkidauto -i wlan0 -w tiny_wordlist.txt
-    
+
 Use the optional **-s** flags to set the APs **--scan_time** and **-t** for the PMKID hash recovery **--time_out**.
 The defaults are scan_time=7  and time_out=15
 
@@ -48,7 +60,7 @@ The defaults are scan_time=7  and time_out=15
 Use the **-c** flag to only crack the hashes, in the hashes.22000 file.
 
     
-    sudo pmkidauto -c -w tiny_wordlist.txt
+    sudo pmkidauto -c -w tiny_wordlist.txt -v
     
 
 You can also importing pmkidauto as module and using the Classes Auto and CrackOnly.
@@ -73,6 +85,48 @@ You can also importing pmkidauto as module and using the Classes Auto and CrackO
     -s, --scan_time   SCAN_TIME   AP scaning time (default 7 seconds)
     -t, --time_out    TIME_OUT    timeout to retrieve PMKID (default 15 seconds)
     -c,--crack_only               crack_only-mode on hashes.22000 file
+    -v,--verbose                  Use the -v flag to enable verbose output for the crack_only-mode
+
+
+## You might need some of this:
+
+**Fix .suroot mkdir permission denied:**
+
+    rm -rf /data/data/com.termux/files/home/.suroot && pkg reinstall tsu
+    
+**Try autoinstall:**
+
+    apt update && apt upgrade && apt install hashcat hcxtools hcxdumptool
+
+**Try to install hcxtools manually:**
+
+    git clone https://github.com/ZerBea/hcxtools.git
+    cd hcxtools
+    make -j $(nproc)
+    make install
+    
+**Try to install hcxdumptool manually:**
+
+    git clone https://github.com/ZerBea/hcxdumptool.git
+    cd hcxdumptool
+    make -j $(nproc)
+    make install
+
+**Try to install Hashcat somehow:**
+
+    pkg install tur-repo
+    pkg install git clang make opencl-headers gnupg curl pocl
+
+    curl -fLO https://github.com/Auxilus/Auxilus-repo/raw/main/auxilus-repo.deb
+
+
+    wget https://hashcat.net/files/hashcat-7.1.2.tar.gz
+    tar -xvf hashcat-7.1.2.tar.gz
+    cd hashcat-7.1.2
+    make
+    make install
+    hashcat --version
+    hashcat -b
 
 
 The PMKID hash was discovered by the creator of Hashcat @jsteube, described here: https://hashcat.net/forum/thread-7717.html
